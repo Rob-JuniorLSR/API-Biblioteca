@@ -16,8 +16,8 @@ async def conectar():
     )
 
 # CREATE
-@app.post("/items")
-async def criar(livro: livro):
+@app.post("/Criar_livros")
+async def criar_livros(livro: livro):
 
     conn = await conectar()
     autor = await conn.fetchrow(
@@ -49,8 +49,8 @@ async def criar(livro: livro):
 
 
 # READ ALL
-@app.get("/items")
-async def listar():
+@app.get("/Listar_livros")
+async def listar_livros():
 
     conn = await conectar()
 
@@ -62,8 +62,8 @@ async def listar():
 
 
 # READ BY ID
-@app.get("/items/{id}")
-async def buscar(id: int):
+@app.get("/Buscar_livros/{id}")
+async def buscar_livros(id: int):
 
     conn = await conectar()
 
@@ -81,7 +81,7 @@ async def buscar(id: int):
     
 
 # UPDATE
-@app.put("/items/{id}")
+@app.put("/Atualizar_livros/{id}")
 async def atualizar_livros(id: int, livro: livro):
     conn = await conectar()
     result = await conn.fetchrow(
@@ -107,8 +107,8 @@ async def atualizar_livros(id: int, livro: livro):
 
 
 # DELETE
-@app.delete("/items/{id}")
-async def deletar(id: int):
+@app.delete("/Deletar_livros/{id}")
+async def Deletar_livros(id: int):
     conn = await conectar()
     result = await conn.fetchrow(
         "DELETE FROM livros WHERE id=$1 RETURNING *",
@@ -122,28 +122,31 @@ async def deletar(id: int):
 
     return {"message": "Deletado com sucesso"}
 
+
 #AUTORES
 
 #CREATE
-@app.post("/autores")
-async def criar(autor: autores):
+@app.post("/Criar Autores")
+async def criar_autores(autor: autores):
 
     conn = await conectar()
-    autor = await conn.fetchrow(
+
+    novo_autor = await conn.fetchrow(
         """
         INSERT INTO autores(nome)
         VALUES($1)
-        RETURNING id, nome
-        """, 
+        RETURNING *
+        """,
         autor.autor
     )
 
-    conn.close()
-    return dict(livro)
+    await conn.close()
+
+    return dict(novo_autor)
 
 #READ
-@app.get("/listar_autores")
-async def listar():
+@app.get("/Listar_autores")
+async def listar_autores():
 
     conn = await conectar()
 
@@ -154,14 +157,14 @@ async def listar():
     return [dict(r) for r in result]
 
 #UPDATE
-@app.put("/update_autores/{id}")
+@app.put("/Update_autores/{id}")
 async def atualizar_autores(id: int, autor: autores):
     conn = await conectar()
     result = await conn.fetchrow(
         """
         UPDATE autores
-        autor=$1,
-        WHERE id=$1
+        SET nome = $1
+        WHERE id = $2
         RETURNING *
         """,
         autor.autor,
