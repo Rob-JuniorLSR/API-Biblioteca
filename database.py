@@ -1,6 +1,11 @@
 import asyncpg
 
-DATABASE_URL = "postgresql://postgres:senha@localhost/biblioteca"
-
 async def conectar():
-    return await asyncpg.connect(DATABASE_URL)
+    print("Conectando no banco...")
+    return await asyncpg.connect(
+        user="postgres",
+        password="082008",
+        database="Biblioteca",
+        host="localhost",
+        port=5432
+    )

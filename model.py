@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
-class Livro(BaseModel):
+class Item(BaseModel):
     titulo: str
     autor: str
     genero: str
-    ano_publicacao: int
+    ano: int
     quantidade: int

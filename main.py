@@ -1,9 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from database import conectar
-from model import Livro
+from model import Item
 
 app = FastAPI()
-
 
 @app.on_event("startup")
 async def startup():
@@ -17,128 +16,76 @@ async def shutdown():
 
 # CREATE
 @app.post("/items")
-async def criar_livro(livro: Livro):
-
-    resultado = await app.state.db.fetchrow(
+async def criar(item: Item):
+    result = await app.state.db.fetchrow(
         """
-        INSERT INTO livros
-        (titulo, genero, ano_publicacao, quantidade, autor_id)
+        INSERT INTO livros (titulo, autor, genero, ano, quantidade)
         VALUES ($1,$2,$3,$4,$5)
         RETURNING *
         """,
-        livro.titulo,
-        livro.genero,
-        livro.ano_publicacao,
-        livro.quantidade,
-        livro.autor_id
+        item.titulo,
+        item.autor,
+        item.genero,
+        item.ano,
+        item.quantidade
     )
+    return dict(result)
 
-    return dict(resultado)
 
-
-# READ LISTA
+# READ ALL
 @app.get("/items")
-async def listar_livros():
-
-    resultado = await app.state.db.fetch(
-        """
-        SELECT
-            livros.id,
-            livros.titulo,
-            autores.nome AS autor,
-            livros.genero,
-            livros.ano_publicacao,
-            livros.quantidade
-        FROM livros
-        JOIN autores
-        ON livros.autor_id = autores.id
-        ORDER BY livros.id
-        """
-    )
-
-    return [dict(r) for r in resultado]
+async def listar():
+    result = await app.state.db.fetch("SELECT * FROM livros")
+    return [dict(r) for r in result]
 
 
-# READ ÚNICO
+# READ BY ID
 @app.get("/items/{id}")
-async def buscar_livro(id: int):
-
-    resultado = await app.state.db.fetchrow(
-        """
-        SELECT
-            livros.id,
-            livros.titulo,
-            autores.nome AS autor,
-            livros.genero,
-            livros.ano_publicacao,
-            livros.quantidade
-        FROM livros
-        JOIN autores
-        ON livros.autor_id = autores.id
-        WHERE livros.id = $1
-        """,
+async def buscar(id: int):
+    result = await app.state.db.fetchrow(
+        "SELECT * FROM livros WHERE id=$1",
         id
     )
 
-    if not resultado:
-        raise HTTPException(
-            status_code=404,
-            detail="Livro não encontrado"
-        )
+    if not result:
+        raise HTTPException(status_code=404, detail="Não encontrado")
 
-    return dict(resultado)
+    return dict(result)
 
 
 # UPDATE
 @app.put("/items/{id}")
-async def atualizar_livro(id: int, livro: Livro):
-
-    resultado = await app.state.db.fetchrow(
+async def atualizar(id: int, item: Item):
+    result = await app.state.db.fetchrow(
         """
         UPDATE livros
-        SET
-            titulo=$1,
-            genero=$2,
-            ano_publicacao=$3,
-            quantidade=$4,
-            autor_id=$5
+        SET titulo=$1, autor=$2, genero=$3, ano=$4, quantidade=$5
         WHERE id=$6
         RETURNING *
         """,
-        livro.titulo,
-        livro.genero,
-        livro.ano_publicacao,
-        livro.quantidade,
-        livro.autor_id,
+        item.titulo,
+        item.autor,
+        item.genero,
+        item.ano,
+        item.quantidade,
         id
     )
 
-    if not resultado:
-        raise HTTPException(
-            status_code=404,
-            detail="Livro não encontrado"
-        )
+    if not result:
+        raise HTTPException(status_code=404, detail="Não encontrado")
 
-    return dict(resultado)
+    return dict(result)
 
 
 # DELETE
 @app.delete("/items/{id}")
-async def deletar_livro(id: int):
-
-    resultado = await app.state.db.fetchrow(
-        """
-        DELETE FROM livros
-        WHERE id=$1
-        RETURNING *
-        """,
+async def deletar(id: int):
+    result = await app.state.db.fetchrow(
+        "DELETE FROM livros WHERE id=$1 RETURNING *",
         id
     )
 
-    if not resultado:
-        raise HTTPException(
-            status_code=404,
-            detail="Livro não encontrado"
-        )
+    if not result:
+        raise HTTPException(status_code=404, detail="Não encontrado")
 
-    return {"mensagem": "Livro removido com sucesso"}
+    return {"message": "Deletado com sucesso"}
